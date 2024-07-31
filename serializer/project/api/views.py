@@ -5,14 +5,21 @@ from rest_framework.renderers import JSONRenderer
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import *
 from .views import *
-
+import io
 
 # Create your views here.
-def student(r):
-    return HttpResponse("hii")
+def stu_list(request):
+    stu = Student.objects.all()
+    # print(stu)
+    serializer=StudentSerializer(stu,many=True)
+    return JsonResponse(serializer.data,safe=False)   
+# safe = False   ka matlab list of dictnary ka data access ke liye likte he
 
-def studentlink(r):
-    return HttpResponse("hiii")
+
+def stu_details(request,pk):
+    user=Student.objects.get(id=pk)
+    serializer=StudentSerializer(user)
+    return JsonResponse(serializer.data,safe=False)
 
 @csrf_exempt
 def list(request):
@@ -34,5 +41,20 @@ def list(request):
             json_data = JSONRenderer().render(res)
             return HttpResponse(json_data, content_type='application/json')
         json_data = JSONRenderer().render(serializer.errors)
-        return HttpResponse(json_data, content_type='application/json')   
+        return HttpResponse(json_data, content_type='application/json')  
+
+    elif request.method=="PUT":
+        json_data=request.body
+        stream=io.BytesIO(json_data)
+        python_data=JSONParser().parse(stream)
+        id=python_data.get('id')
+        stu=Student.objects.get(id=id)
+        serializer=StudentSerializer(stu,data=python_data)
+        if serializer.is_valid():
+            serializer.save()
+            res={"msg":"Data updated !!!"}
+            json_data=JSONRenderer().render(res)
+            return HttpResponse(json_data,content_type='application/json')     
+        json_data=JSONRenderer().render(serializer.errors)
+        return HttpResponse(json_data,content_type="application/json")
      
