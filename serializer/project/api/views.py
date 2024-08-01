@@ -15,11 +15,48 @@ def stu_list(request):
     return JsonResponse(serializer.data,safe=False)   
 # safe = False   ka matlab list of dictnary ka data access ke liye likte he
 
-
+@csrf_exempt
 def stu_details(request,pk):
-    user=Student.objects.get(id=pk)
-    serializer=StudentSerializer(user)
-    return JsonResponse(serializer.data,safe=False)
+    if request.method == "GET":
+        id =Student.objects.get(id=pk)
+        if id:    
+            user=Student.objects.get(id=pk)
+            serializer=StudentSerializer(user)
+            print(serializer.data)
+            return JsonResponse(serializer.data,safe=False)
+        else:
+            res={"msg":"id not exist in database"}
+            return HttpResponse(res)
+    
+    elif request.method=="PUT":
+        id=Student.objects.get(id=pk)
+        if id:
+            jsonData=request.body
+            stream=io.BytesIO(jsonData)
+            python_data=JSONParser().parse(stream)
+            user=Student.objects.get(id=pk)
+            serializer=StudentSerializer(user,data=python_data,partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                res={'msg':"successful"}
+                jsonData=JSONRenderer().render(res)
+                return HttpResponse(jsonData,content_type="application/json")
+            jsonData=JsonResponse().render(serializer.errors)
+            return HttpResponse(jsonData,content_type="application/json")
+        else:
+            res = {'msg': 'id not exist in Database'}
+            return JsonResponse(res)
+    
+    elif request.method == 'DELETE':
+        id = python_data.get(id=pk)
+        if id:
+            stu = Student.objects.get(id=pk)
+            stu.delete()
+            res = {'msg': 'Data Deleted!!'}
+            return JsonResponse(res, safe=False)
+        else:
+            res = {'msg': 'id not present in Database'}
+            return JsonResponse(res)    
 
 @csrf_exempt
 def list(request):
@@ -58,3 +95,33 @@ def list(request):
         json_data=JSONRenderer().render(serializer.errors)
         return HttpResponse(json_data,content_type="application/json")
      
+
+    # elif request.method == 'PATCH':
+    #     json_data = request.body
+    #     stream = io.BytesIO(json_data)
+    #     python_data = JSONParser().parse(stream)
+    #     id = python_data.get('id')
+    #     stu = Student.objects.get(id=id)
+    #     serializer = StudentSerializer(stu, data=python_data, partial = True)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         res = {'msg':'Data partially Updated !!'}
+    #         json_data = JSONRenderer().render(res)
+    #         return HttpResponse(json_data, content_type='application/json')
+    #     json_data = JSONRenderer().render(serializer.errors)
+    #     return HttpResponse(json_data, content_type='application/json') 
+
+    elif request.method == 'DELETE':
+        json_data = request.body
+        stream = io.BytesIO(json_data)
+        python_data = JSONParser().parse(stream)
+        id = python_data.get('id')
+        if id:
+            stu = Student.objects.get(id=id)
+            stu.delete()
+            res = {'msg': 'Data Deleted!!'}
+            return JsonResponse(res, safe=False)
+        else:
+            res = {'msg': 'id not present in Database'}
+            return JsonResponse(res)
+
