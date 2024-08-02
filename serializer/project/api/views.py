@@ -48,10 +48,9 @@ def stu_details(request,pk):
             return JsonResponse(res)
     
     elif request.method == 'DELETE':
-        id = python_data.get(id=pk)
+        id = Student.objects.get(id=pk)
         if id:
-            stu = Student.objects.get(id=pk)
-            stu.delete()
+            id.delete()
             res = {'msg': 'Data Deleted!!'}
             return JsonResponse(res, safe=False)
         else:
